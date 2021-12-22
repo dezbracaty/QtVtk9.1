@@ -1,0 +1,7 @@
+<RCC>
+    <qresource prefix="/">
+        <file>qt-project.org/imports/VTK.9.1/libmyQmlVtkPlugin.so</file>
+        <file>qt-project.org/imports/VTK.9.1/plugins.qmltypes</file>
+        <file>qt-project.org/imports/VTK.9.1/qmldir</file>
+    </qresource>
+</RCC>
