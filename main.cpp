@@ -17,6 +17,43 @@
 #include <vtkPolyLine.h>
 #include <vtkCameraOrientationWidget.h>
 #include <vtkRenderWindowInteractor.h>
+#include <vtkBoxRepresentation.h>
+#include <vtkBoxWidget2.h>
+#include <vtkTransform.h>
+
+namespace {
+class vtkBoxCallback : public vtkCommand
+{
+public:
+  static vtkBoxCallback* New()
+  {
+    return new vtkBoxCallback;
+  }
+
+  vtkSmartPointer<vtkActor> m_actor;
+
+  void SetActor(vtkSmartPointer<vtkActor> actor)
+  {
+    m_actor = actor;
+  }
+
+  virtual void Execute(vtkObject* caller, unsigned long, void*)
+  {
+    vtkSmartPointer<vtkBoxWidget2> boxWidget =
+        dynamic_cast<vtkBoxWidget2*>(caller);
+
+    vtkNew<vtkTransform> t;
+
+    dynamic_cast<vtkBoxRepresentation*>(boxWidget->GetRepresentation())
+        ->GetTransform(t);
+    this->m_actor->SetUserTransform(t);
+  }
+
+  vtkBoxCallback()
+  {
+  }
+};
+} // namespace
 void createLine(const double x1, const double y1, const double z1, const double x2, const double y2, const double z2, vtkSmartPointer<vtkPoints> points, vtkSmartPointer<vtkCellArray> cells)
 {
     vtkSmartPointer<vtkPolyLine> line;
@@ -161,7 +198,17 @@ int main(int argc, char *argv[])
 //    camOrientManipulator->SetCurrentRenderer(qquickvtkItem->renderer());
     vtkNew<vtkRenderWindowInteractor> iRen;
     QQuickVTKRenderWindow* qquickvtkWindow = topLevel->findChild<QQuickVTKRenderWindow*>("RenderWindowQt");
+    vtkNew<vtkBoxWidget2> boxWidget;
+    boxWidget->SetInteractor(iRen);
+    boxWidget->GetRepresentation()->SetPlaceFactor(1); // Default is 0.5
+    boxWidget->GetRepresentation()->PlaceWidget(m_platformModelActor->GetBounds());
 
+    // Set up a callback for the interactor to call so we can manipulate the actor
+    vtkNew<vtkBoxCallback> boxCallback;
+    boxCallback->SetActor(m_platformModelActor);
+    boxWidget->AddObserver(vtkCommand::InteractionEvent, boxCallback);
+
+    boxWidget->On();
 //    iRen->SetRenderWindow(qquickvtkWindow->renderWindow());
 //    iRen->Initialize();
 //    iRen->Start();
