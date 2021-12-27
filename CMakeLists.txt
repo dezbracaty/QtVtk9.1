@@ -1,32 +1,41 @@
 cmake_minimum_required(VERSION 3.14)
 
 project(QuickVtkDemo VERSION 0.1 LANGUAGES CXX)
+
 set(Qt5_DIR "/home/allen/soft/Qt6.2/5.15.2/gcc_64/")
 set(QTDIR "/home/allen/soft/Qt6.2/5.15.2/gcc_64/")
-set(VTK_DIR "/home/allen/usr/local/lib/cmake/vtk-9.1")
+set(VTK_DIR "/home/allen/soft/src/VTK-9.1.0/Dbuild")
 set(CMAKE_PREFIX_PATH ${Qt5_DIR} ${VTK_DIR})
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
-
 set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
-
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 find_package(QT NAMES Qt6 Qt5  REQUIRED COMPONENTS Core Quick Qml )
 find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Core Quick Qml )
-#target_compile_features(
-#    myQmlVtkPlugin
-#    PRIVATE
-#        cxx_auto_type
-#        cxx_generic_lambdas
-#)
+find_package(Qt${QT_VERSION_MAJOR}QuickControls2 REQUIRED)
+
+file(GLOB QML_DESKTOP "../resources/*.qml")
+add_custom_target(QML_files SOURCES ${QML_DESKTOP})
+
 set(PROJECT_SOURCES
         main.cpp
         qml.qrc
-        qquickvtkrenderitem.h
-        qquickvtkrenderitem.cpp
+        qtvtkitem.h
+        qtvtkitem.cpp
+        vtkinteractorstyletrackballcamerastyle2.h
+        vtkinteractorstyletrackballcamerastyle2.cpp
+        CommandModel.cpp
+        CommandModel.h
+        CommandModelAdd.cpp
+        CommandModelAdd.h
+        Model.cpp
+        Model.h
+        ProcessingEngine.cpp
+        ProcessingEngine.h
+
 )
 
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
@@ -48,32 +57,15 @@ else()
     else()
         add_executable(QuickVtkDemo
           ${PROJECT_SOURCES}
-          resources.qrc
+#          resources.qrc
         )
     endif()
 endif()
 # VTK Libraries
 set(VTK_DIR $ENV{VTK_DIR})
 find_package(VTK REQUIRED NO_MODULE)
-add_library(myQmlVtkPlugin SHARED Plugin/myqmlvtkplugin.h Plugin/myqmlvtkplugin.cpp)
-list (APPEND RESOURCES TestQQuickVTK.qrc)
+
 qt5_add_resources (PROJECT_SOURCES ${RESOURCES})
-#target_compile_features(
-#    add_library
-#    PRIVATE
-#        cxx_auto_type
-#        cxx_generic_lambdas
-#)
-target_link_libraries(
-    myQmlVtkPlugin
-    PRIVATE
-        Qt${QT_VERSION_MAJOR}::Core
-        Qt${QT_VERSION_MAJOR}::Quick
-        Qt${QT_VERSION_MAJOR}::Qml
-        ${VTK_LIBRARIES}
-)
-#add_library(myQmlVtkPlugin SHARED /home/allen/qtprojects/Test/QuickVtkDemo/qt-project.org/imports/VTK.9.1/libqmlvtkplugin.so)
-include(${VTK_USE_FILE})
 target_compile_definitions(QuickVtkDemo
   PRIVATE $<$<OR:$<CONFIG:Debug>,$<CONFIG:RelWithDebInfo>>:QT_QML_DEBUG>)
 target_link_libraries(QuickVtkDemo
@@ -81,9 +73,11 @@ target_link_libraries(QuickVtkDemo
   Qt${QT_VERSION_MAJOR}::Core
   Qt${QT_VERSION_MAJOR}::Quick
   Qt${QT_VERSION_MAJOR}::Qml
+  Qt${QT_VERSION_MAJOR}::Widgets
   ${VTK_LIBRARIES}
   ${SYSTEM_LIBS}
-  /home/allen/qtprojects/Test/QuickVtkDemo/build/QuickVtkDemo-Desktop_Qt_5_15_2_GCC_64bit-Release/libmyQmlVtkPlugin.so)
+#  /home/allen/qtprojects/Test/QuickVtkDemo/build/QuickVtkDemo-Desktop_Qt_5_15_2_GCC_64bit-Release/libmyQmlVtkPlugin.so
+  )
 
 
 set_target_properties(QuickVtkDemo PROPERTIES
