@@ -4,7 +4,7 @@
 #include <QQuickVTKRenderWindow.h>
 #include <QQmlApplicationEngine>
 #include <qquickwindow.h>
-#include <qquickvtkrenderitem.h>
+#include "qquickvtkrenderitem.h"
 #include <QQmlContext>
 #include <vtkActor.h>
 #include <vtkConeSource.h>
@@ -33,6 +33,9 @@
 #include "vtkinteractorstyletrackballcamerastyle2.h"
 #include <QQuickVTKInteractorAdapter.h>
 #include "ProcessingEngine.h"
+#include "CommandModelAdd.h"
+#include <queue>
+class MyQQuickVTKRenderItem;
 class qtVtkItem:public QObject
 {
     Q_OBJECT
@@ -44,12 +47,28 @@ public:
     void init() ;
     QQmlApplicationEngine* engine ;
     vtkSmartPointer<vtkCameraOrientationWidget> camOrientManipulator;
+    Q_INVOKABLE void openModel(const QUrl &path) ;
+    void addCommand(CommandModel* command);
+
+
+
+    /** Command related function   **/
+    CommandModel* getCommandsQueueFront() const;
+    void commandsQueuePop();
+    bool isCommandsQueueEmpty() const;
+    void lockCommandsQueueMutex();
+    void unlockCommandsQueueMutex();
 signals:
     void showFileDialogChanged();
+public slots:
+    void modelReadyToImport(CommandModel* command);
 private:
-    std::shared_ptr<ProcessingEngine> m_processingEngine;
+    std::shared_ptr<ProcessingEngine>       m_processingEngine;
     bool m_showFileDialog = false;
-
+    vtkSmartPointer<vtkRenderer>          m_otherRenderer;
+    std::queue<CommandModel*>           m_commandsQueue;
+    std::mutex                    m_commandsQueueMutex;
+    vtkSmartPointer<MyQQuickVTKRenderItem>    m_vtkrenderItem;
 };
 
 #endif // QTVTKITEM_H

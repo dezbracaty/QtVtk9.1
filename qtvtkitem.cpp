@@ -18,7 +18,6 @@ void createLine(const double x1, const double y1, const double z1, const double 
 qtVtkItem::qtVtkItem(QQmlApplicationEngine* oeigen)
 {
     engine = std::move(oeigen);
-    init();
 }
 
 void  qtVtkItem::init()
@@ -27,14 +26,15 @@ void  qtVtkItem::init()
     // Create classes instances
     m_processingEngine = std::shared_ptr<ProcessingEngine>(new ProcessingEngine());
     // Expose C++ classes to QML
-    QQmlContext* ctxt = engine->rootContext();
-    ctxt->setContextProperty("qtVTKItem", this);
+
 
     QQuickWindow* window = qobject_cast<QQuickWindow*>(topLevel);
     window->show();
     QQuickVTKRenderWindow* QvtkRwd = new QQuickVTKRenderWindow();
     // Fetch the QQuick window using the standard object name set up in the constructor
-    QQuickVTKRenderItem* qquickvtkItem = topLevel->findChild<MyQQuickVTKRenderItem*>("ConeView");
+    MyQQuickVTKRenderItem* qquickvtkItem = topLevel->findChild<MyQQuickVTKRenderItem*>("ConeView");
+    m_otherRenderer = qquickvtkItem->renderer();
+    qquickvtkItem->setqtvtkItem(this);
     // Create a cone pipeline and add it to the view
     vtkNew<vtkActor> actor;
     vtkNew<vtkPolyDataMapper> mapper;
@@ -111,7 +111,7 @@ void  qtVtkItem::init()
     mapper->SetInputConnection(cone->GetOutputPort());
     actor->SetMapper(mapper);
 
-    qquickvtkItem->renderer()->AddActor(actor);
+//    qquickvtkItem->renderer()->AddActor(actor);
     qquickvtkItem->renderer()->AddActor(axes);
     qquickvtkItem->renderer()->AddActor(m_platformModelActor);
     qquickvtkItem->renderer()->AddActor(m_platformGridActor);
@@ -170,6 +170,68 @@ void  qtVtkItem::init()
     qquickvtkItem->renderer()->GetActiveCamera()->SetViewUp(0.0, 0.0, 1.0);
     qquickvtkItem->renderer()->GetActiveCamera()->SetFocalPoint(0.0, 0.0, 0.0);
 
+}
+
+void qtVtkItem::openModel(const QUrl &path)
+{
+    QUrl localFilePath;
+    if (path.isLocalFile())
+    {
+        // Remove the "file:///" if present
+        localFilePath = path.toLocalFile();
+    }
+    else
+    {
+        localFilePath = path;
+    }
+    qDebug() << "QVTKFramebufferObjectItem::addModelFromFile"<<localFilePath;
+    CommandModelAdd *command = new CommandModelAdd(m_otherRenderer, m_processingEngine, localFilePath);
+
+//    connect(command, &CommandModelAdd::ready, m_otherRenderer, &vtkRenderer::Render);
+////    connect(command, &CommandModelAdd::done, this, &QVTKFramebufferObjectItem::addModelFromFileDone);
+
+    command->start();
+
+    addCommand(command);
+}
+
+void qtVtkItem::addCommand(CommandModel *command)
+{
+    m_commandsQueueMutex.lock();
+    m_commandsQueue.push(command);
+    m_commandsQueueMutex.unlock();
+
+    //    update();
+}
+
+CommandModel *qtVtkItem::getCommandsQueueFront() const
+{
+    return m_commandsQueue.front();
+}
+
+void qtVtkItem::commandsQueuePop()
+{
+    m_commandsQueue.pop();
+}
+
+bool qtVtkItem::isCommandsQueueEmpty() const
+{
+    return m_commandsQueue.empty();
+}
+
+void qtVtkItem::lockCommandsQueueMutex()
+{
+    m_commandsQueueMutex.lock();
+}
+
+void qtVtkItem::unlockCommandsQueueMutex()
+{
+    m_commandsQueueMutex.unlock();
+}
+
+void qtVtkItem::modelReadyToImport(CommandModel* command)
+{
+    command->execute();
 }
 
 

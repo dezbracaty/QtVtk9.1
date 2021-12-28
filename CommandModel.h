@@ -1,8 +1,7 @@
 #ifndef COMMANDMODEL_H
 #define COMMANDMODEL_H
 
-
-class QVTKFramebufferObjectRenderer;
+#include <vtkRenderer.h>
 
 class CommandModel
 {
@@ -15,7 +14,7 @@ public:
     virtual unsigned typeis() const = 0 ;
 
 protected:
-	QVTKFramebufferObjectRenderer *m_vtkFboRenderer;
+    vtkRenderer *m_vtkRenderer;
 };
 
 #endif // COMMANDMODEL_H

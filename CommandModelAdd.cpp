@@ -3,11 +3,11 @@
 #include "ProcessingEngine.h"
 
 
-CommandModelAdd::CommandModelAdd(QVTKFramebufferObjectRenderer *vtkFboRenderer, std::shared_ptr<ProcessingEngine> processingEngine, QUrl modelPath)
+CommandModelAdd::CommandModelAdd(vtkRenderer *vtkRenderer, std::shared_ptr<ProcessingEngine> processingEngine, QUrl modelPath)
 	: m_processingEngine{processingEngine}
 	, m_modelPath{modelPath}
 {
-	m_vtkFboRenderer = vtkFboRenderer;
+    m_vtkRenderer = vtkRenderer;
 }
 
 
@@ -31,7 +31,7 @@ bool CommandModelAdd::isReady() const
 void CommandModelAdd::execute()
 {
 
-//	m_vtkFboRenderer->addModelActor(m_model);
+    m_vtkRenderer->AddActor(m_model->getModelActor());
 
 	emit done();
 }

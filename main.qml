@@ -163,7 +163,7 @@ ApplicationWindow {
 
         onAccepted: {
             qtVTKItem.showFileDialog = false;
-//            qtVTKItem.openModel(fileUrl);
+            qtVTKItem.openModel(fileUrl);
         }
         onRejected: {
             qtVTKItem.showFileDialog = false;

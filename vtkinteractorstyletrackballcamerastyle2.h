@@ -32,8 +32,8 @@
  * vtkInteractorStyleJoystickActor
  */
 
-#ifndef vtkInteractorStyleTrackballCamera22_h
-#define vtkInteractorStyleTrackballCamera22_h
+#ifndef vtkInteractorStyleTrackballCamera2_h
+#define vtkInteractorStyleTrackballCamera2_h
 
 #include "vtkInteractionStyleModule.h" // For export macro
 #include "vtkInteractorStyle.h"
