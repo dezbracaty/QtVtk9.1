@@ -151,6 +151,7 @@ void  qtVtkItem::init()
 //    style->SetMotionFactor(10.0);
     vtkNew<vtkRenderWindowInteractor> iRen;
     qquickvtkItem->renderWindow()->renderWindow()->GetInteractor()->SetInteractorStyle(style);
+    style->SetDefaultRenderer(qquickvtkItem->renderer());
     QQuickVTKInteractiveWidget* interactorWidget = new QQuickVTKInteractiveWidget(qquickvtkItem->renderWindow());
     interactorWidget->setWidget(camOrientManipulator);
     interactorWidget->setEnabled(true);
@@ -202,6 +203,13 @@ void qtVtkItem::addCommand(CommandModel *command)
     m_commandsQueueMutex.unlock();
 
     //    update();
+}
+
+bool qtVtkItem::getIsModelSelected() const
+{
+    if( m_otherRenderer )
+        return vtkInteractorStyleTrackballCamera2::SafeDownCast( m_otherRenderer->GetRenderWindow()->GetInteractor()->GetInteractorStyle() )
+            ->getIsModelSelected();
 }
 
 CommandModel *qtVtkItem::getCommandsQueueFront() const

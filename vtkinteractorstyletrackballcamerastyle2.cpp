@@ -22,13 +22,17 @@
 #include "vtkRenderWindow.h"
 #include "vtkRenderWindowInteractor.h"
 #include "vtkRenderer.h"
-
+#include <vtkPropPicker.h>
+#include <vtkNamedColors.h>
+#include <vtkCellPicker.h>
 vtkStandardNewMacro(vtkInteractorStyleTrackballCamera2);
 
 //------------------------------------------------------------------------------
 vtkInteractorStyleTrackballCamera2::vtkInteractorStyleTrackballCamera2()
 {
     this->MotionFactor = 10.0;
+    LastPickedActor = NULL;
+    LastPickedProperty = vtkProperty::New();
 }
 
 //------------------------------------------------------------------------------
@@ -78,12 +82,46 @@ void vtkInteractorStyleTrackballCamera2::OnMouseMove()
 //------------------------------------------------------------------------------
 void vtkInteractorStyleTrackballCamera2::OnLeftButtonDown()
 {
+
     this->FindPokedRenderer(
                 this->Interactor->GetEventPosition()[0], this->Interactor->GetEventPosition()[1]);
     if (this->CurrentRenderer == nullptr)
     {
         return;
     }
+    /**
+     * pick the actor when leftbutton down
+     **/
+    // Pick from this location.
+    vtkNew<vtkNamedColors> colors;
+    vtkNew<vtkCellPicker> picker;
+    int* clickPos = this->GetInteractor()->GetEventPosition();
+    std::cout<<"On screen position :"<<clickPos[0] <<"\t"<<clickPos[1]<<std::endl;
+    std::cout<<"Screen param :"<<DefaultRenderer->GetSize()[0]<<"\t"<<DefaultRenderer->GetSize()[1]<<std::endl;
+    picker->Pick(clickPos[0],  clickPos[1], 0, this->GetDefaultRenderer());
+
+    // If we picked something before, reset its property
+    if (this->LastPickedActor)
+    {
+        this->LastPickedActor->GetProperty()->DeepCopy(this->LastPickedProperty);
+    }
+    this->LastPickedActor = picker->GetActor();
+    if (this->LastPickedActor)
+    {
+        // Save the property of the picked actor so that we can
+        // restore it next time
+        std::cout<<"We got a actor"<<std::endl;
+        this->LastPickedProperty->DeepCopy(this->LastPickedActor->GetProperty());
+        // Highlight the picked actor by changing its properties
+        this->LastPickedActor->GetProperty()->SetColor(
+                    colors->GetColor3d("Red").GetData());
+        this->LastPickedActor->GetProperty()->SetDiffuse(1.0);
+        this->LastPickedActor->GetProperty()->SetSpecular(0.0);
+        this->LastPickedActor->GetProperty()->EdgeVisibilityOn();
+        IsModelSelected = true ;
+    }else
+        IsModelSelected = false ;
+
 
     this->GrabFocus(this->EventCallbackCommand);
     if (this->Interactor->GetShiftKey())
@@ -461,6 +499,11 @@ void vtkInteractorStyleTrackballCamera2::EnvironmentRotate()
                 mat->GetElement(0, 0), mat->GetElement(1, 0), mat->GetElement(2, 0));
 
     rwi->Render();
+}
+
+bool vtkInteractorStyleTrackballCamera2::getIsModelSelected() const
+{
+    return IsModelSelected;
 }
 
 //------------------------------------------------------------------------------

@@ -16,142 +16,142 @@ ApplicationWindow {
     Material.primary: Material.Indigo
     Material.accent: Material.LightBlue
 
+    property bool isModelSelected: qtVTKItem.isModelSelected
 
+    VTKRenderWindow {
+        objectName: "RenderWindowQt"
+        id: vtkwindow
+        anchors.fill: parent
+    }
+    VTKRenderItem {
+        objectName: "ConeView"
+        //        x: 0
+        //        y: 0
+        //        width: 200
+        //        height: 200
+        anchors.fill: parent
+        renderWindow: vtkwindow
+        focus: true
+    }
 
-        VTKRenderWindow {
-            objectName: "RenderWindowQt"
-            id: vtkwindow
-            anchors.fill: parent
+    Button {
+        id: openFileButton
+        text: "Open file"
+        highlighted: isModelSelected
+        anchors.right: parent.right
+        anchors.bottom: parent.bottom
+        anchors.margins: 50
+        onClicked: qtVTKItem.showFileDialog = true;
+
+        ToolTip.visible: hovered
+        ToolTip.delay: 1000
+        ToolTip.text: "Open a 3D model into the canvas"
+        background: Rectangle {
+            color: parent.down ? "#bbbbbb" :
+                                 (parent.hovered ? "#d6d6d6" : "#f6f6f6")
         }
-        VTKRenderItem {
-            objectName: "ConeView"
-            //        x: 0
-            //        y: 0
-            //        width: 200
-            //        height: 200
-            anchors.fill: parent
-            renderWindow: vtkwindow
-            focus: true
-        }
+    }
 
-        Button {
-            id: openFileButton
-            text: "Open file"
-            highlighted: true
-            anchors.right: parent.right
-            anchors.bottom: parent.bottom
-            anchors.margins: 50
-            onClicked: qtVTKItem.showFileDialog = true;
+    ComboBox {
+        id: representationCombobox
+        visible: isModelSelected
+        width: 200
+        model: ["Points", "Wireframe", "Surface"]
+        currentIndex: 2
+        anchors.left: parent.left
+        anchors.top: parent.top
+        anchors.leftMargin: 40
+        anchors.topMargin: 30
 
-            ToolTip.visible: hovered
-            ToolTip.delay: 1000
-            ToolTip.text: "Open a 3D model into the canvas"
-            background: Rectangle {
-                color: parent.down ? "#bbbbbb" :
-                                     (parent.hovered ? "#d6d6d6" : "#f6f6f6")
-            }
-        }
+        //            onActivated: canvasHandler.setModelsRepresentation(currentIndex);
+    }
 
-        ComboBox {
-            id: representationCombobox
-            visible: true
-            width: 200
-            model: ["Points", "Wireframe", "Surface"]
-            currentIndex: 2
-            anchors.left: parent.left
-            anchors.top: parent.top
-            anchors.leftMargin: 40
-            anchors.topMargin: 30
+    Slider {
+        id: opacitySlider
+        visible: isModelSelected
+        width: 200
+        value: 1
+        from: 0.1
+        to: 1
+        stepSize: 0.01
+        anchors.left: parent.left
+        anchors.top: representationCombobox.bottom
+        anchors.leftMargin: 40
+        anchors.topMargin: 30
 
-//            onActivated: canvasHandler.setModelsRepresentation(currentIndex);
-        }
+        //            onValueChanged: canvasHandler.setModelsOpacity(value);
+    }
 
-        Slider {
-            id: opacitySlider
-            visible: true
-            width: 200
-            value: 1
-            from: 0.1
-            to: 1
-            stepSize: 0.01
-            anchors.left: parent.left
-            anchors.top: representationCombobox.bottom
-            anchors.leftMargin: 40
-            anchors.topMargin: 30
+    Switch {
+        id: gouraudInterpolationSwitch
+        visible: isModelSelected
+        text: "Gouraud interpolation"
+        anchors.left: parent.left
+        anchors.top: opacitySlider.bottom
+        anchors.leftMargin: 40
+        anchors.topMargin: 30
 
-//            onValueChanged: canvasHandler.setModelsOpacity(value);
-        }
+        //            onCheckedChanged: canvasHandler.setGouraudInterpolation(checked);
+    }
 
-        Switch {
-            id: gouraudInterpolationSwitch
-            visible: true
-            text: "Gouraud interpolation"
-            anchors.left: parent.left
-            anchors.top: opacitySlider.bottom
-            anchors.leftMargin: 40
-            anchors.topMargin: 30
+    SpinBox {
+        id: modelColorR
+        visible: isModelSelected
+        value: 3
+        from: 0
+        to: 255
+        //            onValueChanged: canvasHandler.setModelColorR(value);
+        anchors.left: parent.left
+        anchors.top: gouraudInterpolationSwitch.bottom
+        anchors.leftMargin: 40
+        anchors.topMargin: 30
+    }
 
-//            onCheckedChanged: canvasHandler.setGouraudInterpolation(checked);
-        }
+    SpinBox {
+        id: modelColorG
+        visible: isModelSelected
+        value: 169
+        from: 0
+        to: 255
+        //            onValueChanged: canvasHandler.setModelColorG(value);
+        anchors.left: parent.left
+        anchors.top: modelColorR.bottom
+        anchors.leftMargin: 40
+        anchors.topMargin: 25
+    }
 
-        SpinBox {
-            id: modelColorR
-            visible: true
-            value: 3
-            from: 0
-            to: 255
-//            onValueChanged: canvasHandler.setModelColorR(value);
-            anchors.left: parent.left
-            anchors.top: gouraudInterpolationSwitch.bottom
-            anchors.leftMargin: 40
-            anchors.topMargin: 30
-        }
+    SpinBox {
+        id: modelColorB
+        visible: isModelSelected
+        value: 244
+        from: 0
+        to: 255
+        //            onValueChanged: canvasHandler.setModelColorB(value);
+        anchors.left: parent.left
+        anchors.top: modelColorG.bottom
+        anchors.leftMargin: 40
+        anchors.topMargin: 25
+    }
 
-        SpinBox {
-            id: modelColorG
-            visible: true
-            value: 169
-            from: 0
-            to: 255
-//            onValueChanged: canvasHandler.setModelColorG(value);
-            anchors.left: parent.left
-            anchors.top: modelColorR.bottom
-            anchors.leftMargin: 40
-            anchors.topMargin: 25
-        }
+    Label {
+        id: positionLabelX
+        visible: isModelSelected
+        text: "X: " /*+ canvasHandler.modelPositionX*/
+        font.pixelSize: 12
+        anchors.bottom: positionLabelY.top
+        anchors.left: parent.left
+        anchors.margins: 40
+    }
 
-        SpinBox {
-            id: modelColorB
-            visible: true
-            value: 244
-            from: 0
-            to: 255
-//            onValueChanged: canvasHandler.setModelColorB(value);
-            anchors.left: parent.left
-            anchors.top: modelColorG.bottom
-            anchors.leftMargin: 40
-            anchors.topMargin: 25
-        }
-
-        Label {
-            id: positionLabelX
-            visible: true
-            text: "X: " /*+ canvasHandler.modelPositionX*/
-            font.pixelSize: 12
-            anchors.bottom: positionLabelY.top
-            anchors.left: parent.left
-            anchors.margins: 40
-        }
-
-        Label {
-            id: positionLabelY
-            visible: true
-            text: "Y: " /*+ canvasHandler.modelPositionY*/
-            font.pixelSize: 12
-            anchors.bottom: parent.bottom
-            anchors.left: parent.left
-            anchors.margins: 40
-        }
+    Label {
+        id: positionLabelY
+        visible: isModelSelected
+        text: "Y: " /*+ canvasHandler.modelPositionY*/
+        font.pixelSize: 12
+        anchors.bottom: parent.bottom
+        anchors.left: parent.left
+        anchors.margins: 40
+    }
 
 
     FileDialog {

@@ -40,7 +40,7 @@ class qtVtkItem:public QObject
 {
     Q_OBJECT
     Q_PROPERTY(bool showFileDialog MEMBER m_showFileDialog NOTIFY showFileDialogChanged)
-//    Q_PROPERTY(bool isModelSelected READ getIsModelSelected NOTIFY isModelSelectedChanged)
+    Q_PROPERTY(bool isModelSelected READ getIsModelSelected NOTIFY isModelSelectedChanged)
 
 public:
     qtVtkItem(QQmlApplicationEngine* oeigen);
@@ -49,7 +49,7 @@ public:
     vtkSmartPointer<vtkCameraOrientationWidget> camOrientManipulator;
     Q_INVOKABLE void openModel(const QUrl &path) ;
     void addCommand(CommandModel* command);
-
+    bool getIsModelSelected() const;
 
 
     /** Command related function   **/
@@ -60,6 +60,8 @@ public:
     void unlockCommandsQueueMutex();
 signals:
     void showFileDialogChanged();
+    void isModelSelectedChanged();
+
 public slots:
     void modelReadyToImport(CommandModel* command);
 private:
