@@ -82,13 +82,6 @@ void vtkInteractorStyleTrackballCamera2::OnMouseMove()
 //------------------------------------------------------------------------------
 void vtkInteractorStyleTrackballCamera2::OnLeftButtonDown()
 {
-
-    this->FindPokedRenderer(
-                this->Interactor->GetEventPosition()[0], this->Interactor->GetEventPosition()[1]);
-    if (this->CurrentRenderer == nullptr)
-    {
-        return;
-    }
     /**
      * pick the actor when leftbutton down
      **/
@@ -114,66 +107,21 @@ void vtkInteractorStyleTrackballCamera2::OnLeftButtonDown()
         this->LastPickedProperty->DeepCopy(this->LastPickedActor->GetProperty());
         // Highlight the picked actor by changing its properties
         this->LastPickedActor->GetProperty()->SetColor(
-                    colors->GetColor3d("Red").GetData());
-        this->LastPickedActor->GetProperty()->SetDiffuse(1.0);
-        this->LastPickedActor->GetProperty()->SetSpecular(0.0);
+                    colors->GetColor3d(/*"dodger_blue"*/"cornflower").GetData());
+//        this->LastPickedActor->GetProperty()->SetDiffuse(0.2);
+//        this->LastPickedActor->GetProperty()->SetSpecular(0.2);
         this->LastPickedActor->GetProperty()->EdgeVisibilityOn();
         IsModelSelected = true ;
     }else
         IsModelSelected = false ;
 
 
-    this->GrabFocus(this->EventCallbackCommand);
-    if (this->Interactor->GetShiftKey())
-    {
-        if (this->Interactor->GetControlKey())
-        {
-            this->StartDolly();
-        }
-        else
-        {
-            this->StartPan();
-        }
-    }
-    else
-    {
-        if (this->Interactor->GetControlKey())
-        {
-            this->StartSpin();
-        }
-        else
-        {
-            this->StartRotate();
-        }
-    }
 }
 
 //------------------------------------------------------------------------------
 void vtkInteractorStyleTrackballCamera2::OnLeftButtonUp()
 {
-    switch (this->State)
-    {
-    case VTKIS_DOLLY:
-        this->EndDolly();
-        break;
 
-    case VTKIS_PAN:
-        this->EndPan();
-        break;
-
-    case VTKIS_SPIN:
-        this->EndSpin();
-        break;
-
-    case VTKIS_ROTATE:
-        this->EndRotate();
-        break;
-    }
-
-    if (this->Interactor)
-    {
-        this->ReleaseFocus();
-    }
 }
 
 //------------------------------------------------------------------------------
@@ -208,6 +156,8 @@ void vtkInteractorStyleTrackballCamera2::OnMiddleButtonUp()
 //------------------------------------------------------------------------------
 void vtkInteractorStyleTrackballCamera2::OnRightButtonDown()
 {
+    //remote right button dolly function
+
     this->FindPokedRenderer(
                 this->Interactor->GetEventPosition()[0], this->Interactor->GetEventPosition()[1]);
     if (this->CurrentRenderer == nullptr)
@@ -215,29 +165,52 @@ void vtkInteractorStyleTrackballCamera2::OnRightButtonDown()
         return;
     }
 
-    this->GrabFocus(this->EventCallbackCommand);
 
+    this->GrabFocus(this->EventCallbackCommand);
     if (this->Interactor->GetShiftKey())
     {
-        this->StartEnvRotate();
+        if (this->Interactor->GetControlKey())
+        {
+            this->StartDolly();
+        }
+        else
+        {
+            this->StartPan();
+        }
     }
     else
     {
-        this->StartDolly();
+        if (this->Interactor->GetControlKey())
+        {
+            this->StartSpin();
+        }
+        else
+        {
+            this->StartRotate();
+        }
     }
 }
 
 //------------------------------------------------------------------------------
 void vtkInteractorStyleTrackballCamera2::OnRightButtonUp()
 {
+    //remote right button dolly function
     switch (this->State)
     {
-    case VTKIS_ENV_ROTATE:
-        this->EndEnvRotate();
-        break;
-
     case VTKIS_DOLLY:
         this->EndDolly();
+        break;
+
+    case VTKIS_PAN:
+        this->EndPan();
+        break;
+
+    case VTKIS_SPIN:
+        this->EndSpin();
+        break;
+
+    case VTKIS_ROTATE:
+        this->EndRotate();
         break;
     }
 
