@@ -93,6 +93,7 @@ private:
     bool IsModelSelected ;
     vtkActor* LastPickedActor;
     vtkProperty* LastPickedProperty;
+    vtkProp3D*  InteractionProp;
 };
 
 #endif

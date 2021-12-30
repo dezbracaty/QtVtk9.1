@@ -25,6 +25,9 @@
 #include <vtkPropPicker.h>
 #include <vtkNamedColors.h>
 #include <vtkCellPicker.h>
+#include <vtkTransform.h>
+#include <vtkPlane.h>
+#include <vtkBoundedPlanePointPlacer.h>
 vtkStandardNewMacro(vtkInteractorStyleTrackballCamera2);
 
 //------------------------------------------------------------------------------
@@ -105,6 +108,7 @@ void vtkInteractorStyleTrackballCamera2::OnLeftButtonDown()
         // restore it next time
         std::cout<<"We got a actor"<<std::endl;
         this->LastPickedProperty->DeepCopy(this->LastPickedActor->GetProperty());
+        this->InteractionProp = vtkProp3D::SafeDownCast ( picker->GetViewProp() );
         // Highlight the picked actor by changing its properties
         this->LastPickedActor->GetProperty()->SetColor(
                     colors->GetColor3d(/*"dodger_blue"*/"cornflower").GetData());
@@ -114,6 +118,25 @@ void vtkInteractorStyleTrackballCamera2::OnLeftButtonDown()
         IsModelSelected = true ;
     }else
         IsModelSelected = false ;
+    //part of move actor
+    int x = this->Interactor->GetEventPosition()[0];
+    int y = this->Interactor->GetEventPosition()[1];
+
+    this->FindPokedRenderer(x, y);
+    if (this->CurrentRenderer == nullptr || picker->GetActor() == nullptr)
+    {
+      return;
+    }
+
+    this->GrabFocus(this->EventCallbackCommand);
+    if (this->Interactor->GetControlKey())
+    {
+      this->StartDolly();
+    }
+    else
+    {
+      this->StartPan();
+    }
 
 
 }
@@ -121,7 +144,29 @@ void vtkInteractorStyleTrackballCamera2::OnLeftButtonDown()
 //------------------------------------------------------------------------------
 void vtkInteractorStyleTrackballCamera2::OnLeftButtonUp()
 {
+    switch (this->State)
+      {
+        case VTKIS_DOLLY:
+          this->EndDolly();
+          break;
 
+        case VTKIS_PAN:
+          this->EndPan();
+          break;
+
+        case VTKIS_SPIN:
+          this->EndSpin();
+          break;
+
+        case VTKIS_ROTATE:
+          this->EndRotate();
+          break;
+      }
+
+      if (this->Interactor)
+      {
+        this->ReleaseFocus();
+      }
 }
 
 //------------------------------------------------------------------------------
@@ -323,52 +368,243 @@ void vtkInteractorStyleTrackballCamera2::Spin()
 //------------------------------------------------------------------------------
 void vtkInteractorStyleTrackballCamera2::Pan()
 {
-    if (this->CurrentRenderer == nullptr)
-    {
-        return;
+    if(!IsModelSelected){
+        //if no model selected , the pan can move camera
+        //so the whole scene will move
+        if (this->CurrentRenderer == nullptr)
+        {
+            return;
+        }
+
+        vtkRenderWindowInteractor* rwi = this->Interactor;
+
+        double viewFocus[4], focalDepth, viewPoint[3];
+        double newPickPoint[4], oldPickPoint[4], motionVector[3];
+
+        // Calculate the focal depth since we'll be using it a lot
+
+        vtkCamera* camera = this->CurrentRenderer->GetActiveCamera();
+        camera->GetFocalPoint(viewFocus);
+        this->ComputeWorldToDisplay(viewFocus[0], viewFocus[1], viewFocus[2], viewFocus);
+        focalDepth = viewFocus[2];
+
+        this->ComputeDisplayToWorld(
+                    rwi->GetEventPosition()[0], rwi->GetEventPosition()[1], focalDepth, newPickPoint);
+
+        // Has to recalc old mouse point since the viewport has moved,
+        // so can't move it outside the loop
+
+        this->ComputeDisplayToWorld(
+                    rwi->GetLastEventPosition()[0], rwi->GetLastEventPosition()[1], focalDepth, oldPickPoint);
+
+        // Camera motion is reversed
+
+        motionVector[0] = oldPickPoint[0] - newPickPoint[0];
+        motionVector[1] = oldPickPoint[1] - newPickPoint[1];
+        motionVector[2] = oldPickPoint[2] - newPickPoint[2];
+
+        camera->GetFocalPoint(viewFocus);
+        camera->GetPosition(viewPoint);
+        camera->SetFocalPoint(
+                    motionVector[0] + viewFocus[0], motionVector[1] + viewFocus[1], motionVector[2] + viewFocus[2]);
+
+        camera->SetPosition(
+                    motionVector[0] + viewPoint[0], motionVector[1] + viewPoint[1], motionVector[2] + viewPoint[2]);
+
+        if (rwi->GetLightFollowCamera())
+        {
+            this->CurrentRenderer->UpdateLightsGeometryToFollowCamera();
+        }
+
+        rwi->Render();
+    }else if(0){
+        //this method is not used
+        //if model is selected
+        //the pan only move the actor which user selected
+        //this part of source is from vtkInteractorStyleTrackballActor.cxx pan() code
+        //and modified to suitable platform
+        if (this->CurrentRenderer == nullptr || this->InteractionProp == nullptr)
+        {
+          return;
+        }
+
+        vtkRenderWindowInteractor* rwi = this->Interactor;
+
+        // Use initial center as the origin from which to pan
+
+        double* obj_center = this->InteractionProp->GetCenter();
+
+        double disp_obj_center[3], new_pick_point[4];
+        double old_pick_point[4], motion_vector[3];
+
+        this->ComputeWorldToDisplay(obj_center[0], obj_center[1], obj_center[2], disp_obj_center);
+
+        this->ComputeDisplayToWorld(
+          rwi->GetEventPosition()[0], rwi->GetEventPosition()[1], disp_obj_center[2], new_pick_point);
+
+        this->ComputeDisplayToWorld(rwi->GetLastEventPosition()[0], rwi->GetLastEventPosition()[1],
+          disp_obj_center[2], old_pick_point);
+
+        motion_vector[0] = new_pick_point[0] - old_pick_point[0];
+        motion_vector[1] = new_pick_point[1] - old_pick_point[1];
+        motion_vector[2] = new_pick_point[2] - old_pick_point[2];
+        //we need set z to origin because the models are on platform
+        motion_vector[2] = 0;
+        if (this->InteractionProp->GetUserMatrix() != nullptr)
+        {
+          vtkTransform* t = vtkTransform::New();
+          t->PostMultiply();
+          t->SetMatrix(this->InteractionProp->GetUserMatrix());
+          t->Translate(motion_vector[0], motion_vector[1], motion_vector[2]);
+          this->InteractionProp->GetUserMatrix()->DeepCopy(t->GetMatrix());
+          t->Delete();
+        }
+        else
+        {
+          this->InteractionProp->AddPosition(motion_vector[0], motion_vector[1], motion_vector[2]);
+        }
+
+        if (this->AutoAdjustCameraClippingRange)
+        {
+          this->CurrentRenderer->ResetCameraClippingRange();
+        }
+
+        rwi->Render();
+        //method 1 is not good ,we use plane::intersectwithline directly.
+
+
+
+
+    }else{
+        //we can use this method to calculate point ,but is no needed.
+//        double camPos[3],focalPoint[3];
+//        vtkCamera* camera = this->CurrentRenderer->GetActiveCamera();
+//        camera->GetPosition(camPos);
+//        camera->GetFocalPoint(focalPoint);
+//        double nearWorldPoint[4];
+//        double farWorldPoint[4];
+//        double tmp[3];
+
+//        tmp[0] = displayPos[0];
+//        tmp[1] = displayPos[1];
+//        tmp[2] = 0.0; // near plane
+
+//        ren->SetDisplayPoint(tmp);
+//        ren->DisplayToWorld();
+//        ren->GetWorldPoint(nearWorldPoint);
+
+//        tmp[2] = 1.0; // far plane
+//        ren->SetDisplayPoint(tmp);
+//        ren->DisplayToWorld();
+//        ren->GetWorldPoint(farWorldPoint);
+
+//        double normal[3];
+//        double origin[3];
+
+//        this->GetProjectionNormal(normal);
+//        this->GetProjectionOrigin(origin);
+
+//        double position[3];
+//        double distance;
+//        if (vtkPlane::IntersectWithLine(
+//              nearWorldPoint, farWorldPoint, normal, origin, distance, position))
+
+
+
+
+
+
+
+
+        //Create bounding planes for projection plane
+        vtkSmartPointer<vtkPlane> boundingPlanes[4];
+
+        boundingPlanes[0] = vtkSmartPointer<vtkPlane>::New();
+        boundingPlanes[0]->SetOrigin(0.0, 1000.0, 0.0);
+        boundingPlanes[0]->SetNormal(0.0, -1.0, 0.0);
+
+        boundingPlanes[1] = vtkSmartPointer<vtkPlane>::New();
+        boundingPlanes[1]->SetOrigin(0.0, -1000.0, 0.0);
+        boundingPlanes[1]->SetNormal(0.0, 1.0, 0.0);
+
+        boundingPlanes[2] = vtkSmartPointer<vtkPlane>::New();
+        boundingPlanes[2]->SetOrigin(1000.0, 0.0, 0.0);
+        boundingPlanes[2]->SetNormal(-1.0, 0.0, 0.0);
+
+        boundingPlanes[3] = vtkSmartPointer<vtkPlane>::New();
+        boundingPlanes[3]->SetOrigin(-1000.0, 0.0, 0.0);
+        boundingPlanes[3]->SetNormal(1.0, 0.0, 0.0);
+
+        // Create projection plane parallel platform and Z coordinate from clicked position in model
+        vtkSmartPointer<vtkPlane> plane = vtkSmartPointer<vtkPlane>::New();
+        plane->SetOrigin(0.0, 0.0, 0);
+        plane->SetNormal(0.0, 0.0, 1.0);
+
+        // Set projection and bounding planes to placer
+        vtkSmartPointer<vtkBoundedPlanePointPlacer> placer = vtkSmartPointer<vtkBoundedPlanePointPlacer>::New();
+        placer->SetObliquePlane(plane);
+        placer->SetProjectionNormalToOblique();
+
+        placer->AddBoundingPlane(boundingPlanes[0].Get());
+        placer->AddBoundingPlane(boundingPlanes[1].Get());
+        placer->AddBoundingPlane(boundingPlanes[2].Get());
+        placer->AddBoundingPlane(boundingPlanes[3].Get());
+
+        double screenPos[2];
+        double worldOrient[9];
+        vtkRenderWindowInteractor* rwi = this->Interactor;
+        screenPos[0] = rwi->GetEventPosition()[0];
+        // Compensate the y-axis flip for the picking
+        screenPos[1] = rwi->GetEventPosition()[1];
+
+        int16_t withinBounds;
+        std::array<double, 3> worldPos;
+        withinBounds = placer->ComputeWorldPosition(this->CurrentRenderer, screenPos, worldPos.data(), worldOrient);
+
+
+
+        // Use initial center as the origin from which to pan
+
+        double* obj_center = this->InteractionProp->GetCenter();
+
+        double disp_obj_center[3], new_pick_point[4];
+        double old_pick_point[4], motion_vector[3];
+
+        this->ComputeWorldToDisplay(obj_center[0], obj_center[1], obj_center[2], disp_obj_center);
+
+        this->ComputeDisplayToWorld(
+          rwi->GetEventPosition()[0], rwi->GetEventPosition()[1], disp_obj_center[2], new_pick_point);
+
+        this->ComputeDisplayToWorld(rwi->GetLastEventPosition()[0], rwi->GetLastEventPosition()[1],
+          disp_obj_center[2], old_pick_point);
+
+        motion_vector[0] = worldPos[0] - old_pick_point[0];
+        motion_vector[1] = worldPos[1] - old_pick_point[1];
+        motion_vector[2] = worldPos[2] - old_pick_point[2];
+        //we need set z to origin because the models are on platform
+        motion_vector[2] = 0;
+        if (this->InteractionProp->GetUserMatrix() != nullptr)
+        {
+          vtkTransform* t = vtkTransform::New();
+          t->PostMultiply();
+          t->SetMatrix(this->InteractionProp->GetUserMatrix());
+          t->Translate(motion_vector[0], motion_vector[1], motion_vector[2]);
+          this->InteractionProp->GetUserMatrix()->DeepCopy(t->GetMatrix());
+          t->Delete();
+        }
+        else
+        {
+          this->InteractionProp->AddPosition(motion_vector[0], motion_vector[1], motion_vector[2]);
+        }
+
+        if (this->AutoAdjustCameraClippingRange)
+        {
+          this->CurrentRenderer->ResetCameraClippingRange();
+        }
+
+        rwi->Render();
+
     }
-
-    vtkRenderWindowInteractor* rwi = this->Interactor;
-
-    double viewFocus[4], focalDepth, viewPoint[3];
-    double newPickPoint[4], oldPickPoint[4], motionVector[3];
-
-    // Calculate the focal depth since we'll be using it a lot
-
-    vtkCamera* camera = this->CurrentRenderer->GetActiveCamera();
-    camera->GetFocalPoint(viewFocus);
-    this->ComputeWorldToDisplay(viewFocus[0], viewFocus[1], viewFocus[2], viewFocus);
-    focalDepth = viewFocus[2];
-
-    this->ComputeDisplayToWorld(
-                rwi->GetEventPosition()[0], rwi->GetEventPosition()[1], focalDepth, newPickPoint);
-
-    // Has to recalc old mouse point since the viewport has moved,
-    // so can't move it outside the loop
-
-    this->ComputeDisplayToWorld(
-                rwi->GetLastEventPosition()[0], rwi->GetLastEventPosition()[1], focalDepth, oldPickPoint);
-
-    // Camera motion is reversed
-
-    motionVector[0] = oldPickPoint[0] - newPickPoint[0];
-    motionVector[1] = oldPickPoint[1] - newPickPoint[1];
-    motionVector[2] = oldPickPoint[2] - newPickPoint[2];
-
-    camera->GetFocalPoint(viewFocus);
-    camera->GetPosition(viewPoint);
-    camera->SetFocalPoint(
-                motionVector[0] + viewFocus[0], motionVector[1] + viewFocus[1], motionVector[2] + viewFocus[2]);
-
-    camera->SetPosition(
-                motionVector[0] + viewPoint[0], motionVector[1] + viewPoint[1], motionVector[2] + viewPoint[2]);
-
-    if (rwi->GetLightFollowCamera())
-    {
-        this->CurrentRenderer->UpdateLightsGeometryToFollowCamera();
-    }
-
-    rwi->Render();
 }
 
 //------------------------------------------------------------------------------
