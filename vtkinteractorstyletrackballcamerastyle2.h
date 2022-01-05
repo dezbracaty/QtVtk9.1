@@ -38,6 +38,7 @@
 #include "vtkInteractionStyleModule.h" // For export macro
 #include "vtkInteractorStyle.h"
 #include <vtkProperty.h>
+class qtVtkItem;
 class VTKINTERACTIONSTYLE_EXPORT vtkInteractorStyleTrackballCamera2 : public vtkInteractorStyle
 {
 public:
@@ -79,6 +80,7 @@ public:
     vtkGetMacro(MotionFactor, double);
     ///@}
     bool getIsModelSelected() const ;
+    void setQtItem(qtVtkItem *item);
 protected:
     vtkInteractorStyleTrackballCamera2();
     ~vtkInteractorStyleTrackballCamera2() override;
@@ -94,6 +96,7 @@ private:
     vtkActor* LastPickedActor;
     vtkProperty* LastPickedProperty;
     vtkProp3D*  InteractionProp;
+    qtVtkItem *qtItem;
 };
 
 #endif

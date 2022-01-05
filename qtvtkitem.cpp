@@ -28,13 +28,13 @@ void  qtVtkItem::init()
     // Expose C++ classes to QML
 
 
-    QQuickWindow* window = qobject_cast<QQuickWindow*>(topLevel);
-    window->show();
+    qquickWindow = qobject_cast<QQuickWindow*>(topLevel);
+    qquickWindow->show();
     QQuickVTKRenderWindow* QvtkRwd = new QQuickVTKRenderWindow();
     // Fetch the QQuick window using the standard object name set up in the constructor
-    MyQQuickVTKRenderItem* qquickvtkItem = topLevel->findChild<MyQQuickVTKRenderItem*>("ConeView");
-    m_otherRenderer = qquickvtkItem->renderer();
-    qquickvtkItem->setqtvtkItem(this);
+    m_QQuickvtkrenderItem = topLevel->findChild<MyQQuickVTKRenderItem*>("ConeView");
+    m_otherRenderer = m_QQuickvtkrenderItem->renderer();
+    m_QQuickvtkrenderItem->setqtvtkItem(this);
     // Create a cone pipeline and add it to the view
     vtkNew<vtkActor> actor;
     vtkNew<vtkPolyDataMapper> mapper;
@@ -111,20 +111,20 @@ void  qtVtkItem::init()
     mapper->SetInputConnection(cone->GetOutputPort());
     actor->SetMapper(mapper);
 
-//    qquickvtkItem->renderer()->AddActor(actor);
-    qquickvtkItem->renderer()->AddActor(axes);
-    qquickvtkItem->renderer()->AddActor(m_platformModelActor);
-    qquickvtkItem->renderer()->AddActor(m_platformGridActor);
+//    m_QQuickvtkrenderItem->renderer()->AddActor(actor);
+    m_QQuickvtkrenderItem->renderer()->AddActor(axes);
+    m_QQuickvtkrenderItem->renderer()->AddActor(m_platformModelActor);
+    m_QQuickvtkrenderItem->renderer()->AddActor(m_platformGridActor);
     camOrientManipulator = vtkSmartPointer<vtkCameraOrientationWidget>::New() ;
     // Enable the widget.
-    qquickvtkItem->renderer()->ResetCamera();
+    m_QQuickvtkrenderItem->renderer()->ResetCamera();
 
-    qquickvtkItem->renderer()->SetBackground(0.5, 0.5, 0.7);
-    qquickvtkItem->renderer()->SetBackground2(0.7, 0.7, 0.7);
-    qquickvtkItem->renderer()->SetGradientBackground(true);
+    m_QQuickvtkrenderItem->renderer()->SetBackground(0.5, 0.5, 0.7);
+    m_QQuickvtkrenderItem->renderer()->SetBackground2(0.7, 0.7, 0.7);
+    m_QQuickvtkrenderItem->renderer()->SetGradientBackground(true);
 
-//    qquickvtkItem->update();
-//    camOrientManipulator->SetCurrentRenderer(qquickvtkItem->renderer());
+//    m_QQuickvtkrenderItem->update();
+//    camOrientManipulator->SetCurrentRenderer(m_QQuickvtkrenderItem->renderer());
 //    vtkNew<vtkRenderWindowInteractor> iRen;
 //    QQuickVTKRenderWindow* qquickvtkWindow = topLevel->findChild<QQuickVTKRenderWindow*>("RenderWindowQt");
 //    vtkNew<vtkBoxWidget2> boxWidget;
@@ -147,29 +147,30 @@ void  qtVtkItem::init()
 
     // Interactor Style
     vtkSmartPointer<vtkInteractorStyleTrackballCamera2> style = vtkSmartPointer<vtkInteractorStyleTrackballCamera2>::New();
-//    style->SetDefaultRenderer(qquickvtkItem->renderer());
+//    style->SetDefaultRenderer(m_QQuickvtkrenderItem->renderer());
 //    style->SetMotionFactor(10.0);
     vtkNew<vtkRenderWindowInteractor> iRen;
-    qquickvtkItem->renderWindow()->renderWindow()->GetInteractor()->SetInteractorStyle(style);
-    style->SetDefaultRenderer(qquickvtkItem->renderer());
-    QQuickVTKInteractiveWidget* interactorWidget = new QQuickVTKInteractiveWidget(qquickvtkItem->renderWindow());
+    m_QQuickvtkrenderItem->renderWindow()->renderWindow()->GetInteractor()->SetInteractorStyle(style);
+    style->SetDefaultRenderer(m_QQuickvtkrenderItem->renderer());
+    style->setQtItem(this);
+    QQuickVTKInteractiveWidget* interactorWidget = new QQuickVTKInteractiveWidget(m_QQuickvtkrenderItem->renderWindow());
     interactorWidget->setWidget(camOrientManipulator);
     interactorWidget->setEnabled(true);
-    qquickvtkItem->addWidget(interactorWidget);
-    camOrientManipulator->SetParentRenderer(qquickvtkItem->renderer());
-    camOrientManipulator->SetInteractor(qquickvtkItem->renderWindow()->renderWindow()->GetInteractor());
-    qquickvtkItem->update();
+    m_QQuickvtkrenderItem->addWidget(interactorWidget);
+    camOrientManipulator->SetParentRenderer(m_QQuickvtkrenderItem->renderer());
+    camOrientManipulator->SetInteractor(m_QQuickvtkrenderItem->renderWindow()->renderWindow()->GetInteractor());
+    m_QQuickvtkrenderItem->update();
     camOrientManipulator->EnabledOn();
-    qquickvtkItem->renderWindow()->interactorAdapter()->SetEnableHover(true);
+    m_QQuickvtkrenderItem->renderWindow()->interactorAdapter()->SetEnableHover(true);
     camOrientManipulator->On();
 
     double m_camPositionX = -237.885;
     double m_camPositionY = -392.348;
     double m_camPositionZ = 369.477;
 
-    qquickvtkItem->renderer()->GetActiveCamera()->SetPosition(m_camPositionX, m_camPositionY, m_camPositionZ);
-    qquickvtkItem->renderer()->GetActiveCamera()->SetViewUp(0.0, 0.0, 1.0);
-    qquickvtkItem->renderer()->GetActiveCamera()->SetFocalPoint(0.0, 0.0, 0.0);
+    m_QQuickvtkrenderItem->renderer()->GetActiveCamera()->SetPosition(m_camPositionX, m_camPositionY, m_camPositionZ);
+    m_QQuickvtkrenderItem->renderer()->GetActiveCamera()->SetViewUp(0.0, 0.0, 1.0);
+    m_QQuickvtkrenderItem->renderer()->GetActiveCamera()->SetFocalPoint(0.0, 0.0, 0.0);
 
 }
 
@@ -196,6 +197,31 @@ void qtVtkItem::openModel(const QUrl &path)
     addCommand(command);
 }
 
+
+void qtVtkItem::setModelsRepresentation(const int value)
+{
+    m_QQuickvtkrenderItem->pushCommandToQueue([=](){
+        m_processingEngine->setModelsRepresentation(value);
+        qquickWindow->resetOpenGLState();
+        });
+}
+
+void qtVtkItem::setModelsOpacity(const double value)
+{
+    m_QQuickvtkrenderItem->pushCommandToQueue([=](){
+        m_processingEngine->setModelsOpacity(value);
+        qquickWindow->resetOpenGLState();
+        });
+}
+
+void qtVtkItem::setGouraudInterpolation(const bool value)
+{
+    m_QQuickvtkrenderItem->pushCommandToQueue([=](){
+        m_processingEngine->setModelsGouraudInterpolation(value);
+        qquickWindow->resetOpenGLState();
+        });
+}
+
 void qtVtkItem::addCommand(CommandModel *command)
 {
     m_commandsQueueMutex.lock();
@@ -207,9 +233,16 @@ void qtVtkItem::addCommand(CommandModel *command)
 
 bool qtVtkItem::getIsModelSelected() const
 {
-    if( m_otherRenderer )
-        return vtkInteractorStyleTrackballCamera2::SafeDownCast( m_otherRenderer->GetRenderWindow()->GetInteractor()->GetInteractorStyle() )
-            ->getIsModelSelected();
+//    if( m_otherRenderer )
+//        return vtkInteractorStyleTrackballCamera2::SafeDownCast( m_otherRenderer->GetRenderWindow()->GetInteractor()->GetInteractorStyle() )
+//                ->getIsModelSelected();
+    return isModelSelected;
+}
+
+void qtVtkItem::setIsModelSelected(bool flag)
+{
+    isModelSelected = flag;
+    emit isModelSelectedChanged();
 }
 
 CommandModel *qtVtkItem::getCommandsQueueFront() const

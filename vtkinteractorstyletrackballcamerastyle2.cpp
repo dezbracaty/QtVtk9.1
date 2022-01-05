@@ -28,6 +28,7 @@
 #include <vtkTransform.h>
 #include <vtkPlane.h>
 #include <vtkBoundedPlanePointPlacer.h>
+#include "qtvtkitem.h"
 vtkStandardNewMacro(vtkInteractorStyleTrackballCamera2);
 
 //------------------------------------------------------------------------------
@@ -114,10 +115,14 @@ void vtkInteractorStyleTrackballCamera2::OnLeftButtonDown()
                     colors->GetColor3d(/*"dodger_blue"*/"cornflower").GetData());
 //        this->LastPickedActor->GetProperty()->SetDiffuse(0.2);
 //        this->LastPickedActor->GetProperty()->SetSpecular(0.2);
-        this->LastPickedActor->GetProperty()->EdgeVisibilityOn();
+//        this->LastPickedActor->GetProperty()->EdgeVisibilityOn();
+//        this->LastPickedActor->GetProperty()->SetRepresentation(0);
+        if(qtItem) qtItem->setIsModelSelected(true);
         IsModelSelected = true ;
-    }else
+    }else{
+        if(qtItem) qtItem->setIsModelSelected(false);
         IsModelSelected = false ;
+    }
     //part of move actor
     int x = this->Interactor->GetEventPosition()[0];
     int y = this->Interactor->GetEventPosition()[1];
@@ -713,6 +718,11 @@ void vtkInteractorStyleTrackballCamera2::EnvironmentRotate()
 bool vtkInteractorStyleTrackballCamera2::getIsModelSelected() const
 {
     return IsModelSelected;
+}
+
+void vtkInteractorStyleTrackballCamera2::setQtItem(qtVtkItem *item)
+{
+    qtItem = item;
 }
 
 //------------------------------------------------------------------------------

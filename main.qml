@@ -62,8 +62,7 @@ ApplicationWindow {
         anchors.top: parent.top
         anchors.leftMargin: 40
         anchors.topMargin: 30
-
-        //            onActivated: canvasHandler.setModelsRepresentation(currentIndex);
+        onActivated: qtVTKItem.setModelsRepresentation(currentIndex);
     }
 
     Slider {
@@ -79,7 +78,7 @@ ApplicationWindow {
         anchors.leftMargin: 40
         anchors.topMargin: 30
 
-        //            onValueChanged: canvasHandler.setModelsOpacity(value);
+        onValueChanged: qtVTKItem.setModelsOpacity(value);
     }
 
     Switch {
@@ -91,7 +90,7 @@ ApplicationWindow {
         anchors.leftMargin: 40
         anchors.topMargin: 30
 
-        //            onCheckedChanged: canvasHandler.setGouraudInterpolation(checked);
+        onCheckedChanged: qtVTKItem.setGouraudInterpolation(checked);
     }
 
     SpinBox {

@@ -13,7 +13,6 @@ void MyQQuickVTKRenderItem::sync()
         qtvtkItem->lockCommandsQueueMutex();
 
         command = qtvtkItem->getCommandsQueueFront();
-//        CommandModelTranslate *commandTranslate = static_cast<CommandModelTranslate*>(command);
         if ( !command->isReady() )
         {
             qtvtkItem->unlockCommandsQueueMutex();
@@ -29,5 +28,11 @@ void MyQQuickVTKRenderItem::sync()
         qtvtkItem->unlockCommandsQueueMutex();
         command->execute();
     }
+    while(!CommandQueue.empty()){
+        std::function<void()> task = std::move( this->CommandQueue.front() );
+        this->CommandQueue.pop();
+        task();
+    }
     QQuickVTKRenderItem::sync();
 }
+

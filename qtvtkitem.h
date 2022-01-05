@@ -39,17 +39,23 @@ class MyQQuickVTKRenderItem;
 class qtVtkItem:public QObject
 {
     Q_OBJECT
+public:
     Q_PROPERTY(bool showFileDialog MEMBER m_showFileDialog NOTIFY showFileDialogChanged)
-    Q_PROPERTY(bool isModelSelected READ getIsModelSelected NOTIFY isModelSelectedChanged)
+    Q_PROPERTY(bool isModelSelected READ getIsModelSelected WRITE setIsModelSelected NOTIFY isModelSelectedChanged)
+    bool isModelSelected = false;
+    bool getIsModelSelected() const;
+    void setIsModelSelected(bool flag);
+    Q_INVOKABLE void openModel(const QUrl &path) ;
+    Q_INVOKABLE void setModelsRepresentation(const int value);
+    Q_INVOKABLE void setModelsOpacity(const double value);
+    Q_INVOKABLE void setGouraudInterpolation(const bool value);
 
 public:
     qtVtkItem(QQmlApplicationEngine* oeigen);
     void init() ;
     QQmlApplicationEngine* engine ;
     vtkSmartPointer<vtkCameraOrientationWidget> camOrientManipulator;
-    Q_INVOKABLE void openModel(const QUrl &path) ;
     void addCommand(CommandModel* command);
-    bool getIsModelSelected() const;
 
 
     /** Command related function   **/
@@ -70,7 +76,8 @@ private:
     vtkSmartPointer<vtkRenderer>          m_otherRenderer;
     std::queue<CommandModel*>           m_commandsQueue;
     std::mutex                    m_commandsQueueMutex;
-    vtkSmartPointer<MyQQuickVTKRenderItem>    m_vtkrenderItem;
+    MyQQuickVTKRenderItem*              m_QQuickvtkrenderItem;
+    QQuickWindow*                   qquickWindow;
 };
 
 #endif // QTVTKITEM_H

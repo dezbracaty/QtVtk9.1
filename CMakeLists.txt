@@ -81,9 +81,9 @@ set (SOURCES
 )
 
 if (NOT APPLE)
-        add_definitions(-std=c++11 -fext-numeric-literals -DPTHREADS_USED)
+        add_definitions(-std=c++14 -fext-numeric-literals -DPTHREADS_USED)
 else()
-        add_definitions(-std=c++11)
+        add_definitions(-std=c++14)
 endif()
 add_definitions(-DQT_NO_VERSION_TAGGING)    #compiler errorundefined reference to `qt_version_tag@Qt_5.15'
 # Qt Resources
