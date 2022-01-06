@@ -81,6 +81,11 @@ public:
     ///@}
     bool getIsModelSelected() const ;
     void setQtItem(qtVtkItem *item);
+    /**
+ * @brief vtkInteractorStyleTrackballCamera2
+ * add key press event for del
+ */
+    void OnKeyDown() override;
 protected:
     vtkInteractorStyleTrackballCamera2();
     ~vtkInteractorStyleTrackballCamera2() override;

@@ -138,5 +138,7 @@ std::shared_ptr<Model> ProcessingEngine::getModelFromActor(const vtkSmartPointer
 	}
 
 	// Raise exception instead
-	return nullptr;
+    return nullptr;
 }
+
+

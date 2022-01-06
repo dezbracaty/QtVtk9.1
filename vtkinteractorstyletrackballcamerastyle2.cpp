@@ -93,34 +93,24 @@ void vtkInteractorStyleTrackballCamera2::OnLeftButtonDown()
     vtkNew<vtkNamedColors> colors;
     vtkNew<vtkCellPicker> picker;
     int* clickPos = this->GetInteractor()->GetEventPosition();
-    std::cout<<"On screen position :"<<clickPos[0] <<"\t"<<clickPos[1]<<std::endl;
-    std::cout<<"Screen param :"<<DefaultRenderer->GetSize()[0]<<"\t"<<DefaultRenderer->GetSize()[1]<<std::endl;
     picker->Pick(clickPos[0],  clickPos[1], 0, this->GetDefaultRenderer());
+    auto currentPickActor = picker->GetActor();
 
-    // If we picked something before, reset its property
-    if (this->LastPickedActor)
+    if (currentPickActor)
     {
-        this->LastPickedActor->GetProperty()->DeepCopy(this->LastPickedProperty);
-    }
-    this->LastPickedActor = picker->GetActor();
-    if (this->LastPickedActor)
-    {
-        // Save the property of the picked actor so that we can
-        // restore it next time
-        std::cout<<"We got a actor"<<std::endl;
-        this->LastPickedProperty->DeepCopy(this->LastPickedActor->GetProperty());
+        // Save the property of the picked actor so that we can restore it next time
+        // if we select an actor and this actor are another one,
+        // we should restore the last actor and reset the last actor and its property
+        if(LastPickedActor != currentPickActor && LastPickedActor ){
+            qtItem->setSelectedModel(LastPickedActor,false);
+        }
+        this->LastPickedActor = currentPickActor;
         this->InteractionProp = vtkProp3D::SafeDownCast ( picker->GetViewProp() );
-        // Highlight the picked actor by changing its properties
-        this->LastPickedActor->GetProperty()->SetColor(
-                    colors->GetColor3d(/*"dodger_blue"*/"cornflower").GetData());
-//        this->LastPickedActor->GetProperty()->SetDiffuse(0.2);
-//        this->LastPickedActor->GetProperty()->SetSpecular(0.2);
-//        this->LastPickedActor->GetProperty()->EdgeVisibilityOn();
-//        this->LastPickedActor->GetProperty()->SetRepresentation(0);
-        if(qtItem) qtItem->setIsModelSelected(true);
+        if(qtItem) qtItem->setSelectedModel(LastPickedActor,true);
         IsModelSelected = true ;
     }else{
-        if(qtItem) qtItem->setIsModelSelected(false);
+        if(this->LastPickedActor)
+            if(qtItem) qtItem->setSelectedModel(LastPickedActor,false);
         IsModelSelected = false ;
     }
     //part of move actor
@@ -723,6 +713,22 @@ bool vtkInteractorStyleTrackballCamera2::getIsModelSelected() const
 void vtkInteractorStyleTrackballCamera2::setQtItem(qtVtkItem *item)
 {
     qtItem = item;
+}
+
+void vtkInteractorStyleTrackballCamera2::OnKeyDown()
+{
+    int key = (int)this->Interactor->GetKeyCode();
+    switch (key) {
+    case 127:
+        this->CurrentRenderer->RemoveActor(LastPickedActor);
+        qtItem->setSelectedModel(LastPickedActor,false);
+        qtItem->setIsModelSelected(false);
+        LastPickedActor = nullptr;
+        LastPickedProperty = nullptr;
+    default:
+        std::cout<<"key code is "<<(int)this->Interactor->GetKeyCode()<<std::endl;
+        break;
+    }
 }
 
 //------------------------------------------------------------------------------

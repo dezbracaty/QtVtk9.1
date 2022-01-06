@@ -18,6 +18,7 @@ class Model : public QObject
 	Q_OBJECT
 
 public:
+    using Ptr = std::shared_ptr<Model>;
 	Model(vtkSmartPointer<vtkPolyData> modelData);
 
 	const vtkSmartPointer<vtkActor>& getModelActor() const;

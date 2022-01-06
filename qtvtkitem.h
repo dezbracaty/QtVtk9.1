@@ -35,6 +35,7 @@
 #include "ProcessingEngine.h"
 #include "CommandModelAdd.h"
 #include <queue>
+#include "Model.h"
 class MyQQuickVTKRenderItem;
 class qtVtkItem:public QObject
 {
@@ -49,7 +50,8 @@ public:
     Q_INVOKABLE void setModelsRepresentation(const int value);
     Q_INVOKABLE void setModelsOpacity(const double value);
     Q_INVOKABLE void setGouraudInterpolation(const bool value);
-
+    Q_INVOKABLE void delSelectedModel();
+    void setSelectedModel(vtkActor* actor , bool flag);
 public:
     qtVtkItem(QQmlApplicationEngine* oeigen);
     void init() ;
@@ -58,7 +60,7 @@ public:
     void addCommand(CommandModel* command);
 
 
-    /** Command related function   **/
+    /** Command Queue related function   **/
     CommandModel* getCommandsQueueFront() const;
     void commandsQueuePop();
     bool isCommandsQueueEmpty() const;
@@ -78,6 +80,7 @@ private:
     std::mutex                    m_commandsQueueMutex;
     MyQQuickVTKRenderItem*              m_QQuickvtkrenderItem;
     QQuickWindow*                   qquickWindow;
+    Model::Ptr                      m_selectedModel;
 };
 
 #endif // QTVTKITEM_H

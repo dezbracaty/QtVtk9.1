@@ -24,6 +24,7 @@ ApplicationWindow {
         anchors.fill: parent
     }
     VTKRenderItem {
+        id: coneViewItem
         objectName: "ConeView"
         //        x: 0
         //        y: 0
@@ -77,7 +78,6 @@ ApplicationWindow {
         anchors.top: representationCombobox.bottom
         anchors.leftMargin: 40
         anchors.topMargin: 30
-
         onValueChanged: qtVTKItem.setModelsOpacity(value);
     }
 
@@ -89,7 +89,6 @@ ApplicationWindow {
         anchors.top: opacitySlider.bottom
         anchors.leftMargin: 40
         anchors.topMargin: 30
-
         onCheckedChanged: qtVTKItem.setGouraudInterpolation(checked);
     }
 
@@ -97,6 +96,7 @@ ApplicationWindow {
         id: modelColorR
         visible: isModelSelected
         value: 3
+        editable: true
         from: 0
         to: 255
         //            onValueChanged: canvasHandler.setModelColorR(value);
@@ -167,5 +167,11 @@ ApplicationWindow {
         onRejected: {
             qtVTKItem.showFileDialog = false;
         }
+    }
+    onFocusObjectChanged: {
+        if(activeFocusItem == null){
+            coneViewItem.focus = true
+        }
+
     }
 }

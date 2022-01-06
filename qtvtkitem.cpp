@@ -136,7 +136,6 @@ void  qtVtkItem::init()
 //    vtkNew<vtkBoxCallback> boxCallback;
 //    boxCallback->SetActor(m_platformModelActor);
 //    boxWidget->AddObserver(vtkCommand::InteractionEvent, boxCallback);
-
 //    boxWidget->On();
 
 
@@ -159,9 +158,9 @@ void  qtVtkItem::init()
     m_QQuickvtkrenderItem->addWidget(interactorWidget);
     camOrientManipulator->SetParentRenderer(m_QQuickvtkrenderItem->renderer());
     camOrientManipulator->SetInteractor(m_QQuickvtkrenderItem->renderWindow()->renderWindow()->GetInteractor());
+    m_QQuickvtkrenderItem->renderWindow()->interactorAdapter()->SetEnableHover(true);
     m_QQuickvtkrenderItem->update();
     camOrientManipulator->EnabledOn();
-    m_QQuickvtkrenderItem->renderWindow()->interactorAdapter()->SetEnableHover(true);
     camOrientManipulator->On();
 
     double m_camPositionX = -237.885;
@@ -219,7 +218,25 @@ void qtVtkItem::setGouraudInterpolation(const bool value)
     m_QQuickvtkrenderItem->pushCommandToQueue([=](){
         m_processingEngine->setModelsGouraudInterpolation(value);
         qquickWindow->resetOpenGLState();
-        });
+    });
+}
+
+void qtVtkItem::delSelectedModel()
+{
+//    if(isModelSelected){
+//        m_otherRenderer->RemoveActor();
+//        isModelSelected = false ;
+//    }
+
+}
+
+void qtVtkItem::setSelectedModel(vtkActor* actor, bool flag)
+{
+    m_selectedModel = m_processingEngine->getModelFromActor(actor);
+    if(m_selectedModel)
+        m_selectedModel->setSelected(flag);
+    this->setIsModelSelected(flag);
+
 }
 
 void qtVtkItem::addCommand(CommandModel *command)
