@@ -118,7 +118,6 @@ void  qtVtkItem::init()
     camOrientManipulator = vtkSmartPointer<vtkCameraOrientationWidget>::New() ;
     // Enable the widget.
     m_QQuickvtkrenderItem->renderer()->ResetCamera();
-
     m_QQuickvtkrenderItem->renderer()->SetBackground(0.5, 0.5, 0.7);
     m_QQuickvtkrenderItem->renderer()->SetBackground2(0.7, 0.7, 0.7);
     m_QQuickvtkrenderItem->renderer()->SetGradientBackground(true);

@@ -8,8 +8,10 @@ import VTKPLUS 9.1
 
 ApplicationWindow {
     id: root
-    minimumWidth: 1024
-    minimumHeight: 700
+//    minimumWidth: 1024
+//    minimumHeight: 700
+    minimumWidth: 600
+    minimumHeight: 600
     visible: true
     title: "QtVTK"
 
@@ -172,6 +174,5 @@ ApplicationWindow {
         if(activeFocusItem == null){
             coneViewItem.focus = true
         }
-
     }
 }
